@@ -1,0 +1,23 @@
+$servers = Get-Content "C:\Test\serverlist.txt"
+
+foreach ($server in $servers) {
+    $computerName = $server
+
+    $SQLService = Get-Service -ComputerName $computerName | Where-Object { $_.DisplayName -like "*SQL*" -and $_.Name -notmatch "SQLBrowser|SQLTELEMETRY|SQLWriter" }
+
+    $serviceTable = $SQLService | Select-Object @{Name="ComputerName"; Expression={$computerName}}, Name, Status | Format-Table -AutoSize
+
+    Write-Output "Service Status on $server"
+    Write-Output $serviceTable
+}
+
+===========================
+$servers = Get-Content "C:\Test\serverlist.txt"
+
+foreach ($server in $servers) {
+    try {
+        Invoke-Sqlcmd -Query "SELECT @@servername As Instance_Name, Name, state_desc FROM sys.databases" -ServerInstance $server
+    } catch {
+        Write-Host "Unable to connect to SQL Server: $server"
+    }
+}
